@@ -14,11 +14,6 @@ await client.statePublisher().sink { state in
 await a.eventPublisher().sink { _ in } receiveValue: { event in
     // Received an new Event, do something with it...
 }.store(in: &cancellables)
-    
-await a.responsePublisher().sink { _ in } receiveValue: { event in
-    // Do you make a Request?... Arrived the response, do 
-    // something with it....
-}.store(in: &cancellables)
 
 try? await client.connect(
     url: URL(string: "ws://192.168.10.112:4455")!,
@@ -27,9 +22,9 @@ try? await client.connect(
 // At this point, you are connected to the OBS, try sending some
 // commands or keep listening for changes and events.
 
-await client.send(request: .getVersion)
-// Sends a GetVersion request, response will be published to 
-// eventPublisher()
+let result: GetVersionResponse = try await a.send(request: .getVersion)
+print(result.platform)
+// Sends a GetVersion request and awaits for its response.
 ```
 
 ## Introduction

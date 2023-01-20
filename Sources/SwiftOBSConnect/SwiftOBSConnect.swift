@@ -10,7 +10,7 @@ public actor SwiftOBSConnect {
     private var responseSubject = PassthroughSubject<Response, Error>()
     private var stateSubject = CurrentValueSubject<State, Never>(.disconnected)
     
-    private lazy var machine = {
+    private lazy var executor = {
         return OpCodeExecutor(sender: self)
     }()
     
@@ -40,7 +40,7 @@ public actor SwiftOBSConnect {
                     }
                     
                     Task {
-                        try await self.machine.exec(
+                        try await self.executor.exec(
                             opCode: type.getState(
                                 usingConfig: .init(
                                     password: password ?? String(),
@@ -74,18 +74,25 @@ public actor SwiftOBSConnect {
             .eraseToAnyPublisher()
     }
     
-    public func responsePublisher() -> AnyPublisher<Response, Error> {
-        return responseSubject
-            .eraseToAnyPublisher()
-    }
-    
     public func statePublisher() -> AnyPublisher<State, Never> {
         return stateSubject
             .eraseToAnyPublisher()
     }
     
-    public func send(request: Request) async {
+    public func send<B: Codable>(request: Request) async throws -> B {
         try? await send(message: RequestOpMessage(d: request))
+        
+        let result = await withCheckedContinuation { c in
+            responseSubject.sink { _ in } receiveValue: { response in
+                c.resume(returning: response.model)
+            }.store(in: &cancellables)
+        } as? B
+        
+        if let result = result {
+            return result
+        } else {
+            throw OBSError.invalidResponseForRequest
+        }
     }
 }
 
@@ -96,11 +103,14 @@ extension SwiftOBSConnect: Sender {
         }
         
         switch await socket.send(string: data) {
-        case .success:
-            print(" ---> SENT: \(data)")
+        case .success: break
         case.failure(let e):
             throw e
         }
+    }
+    
+    public enum OBSError: Swift.Error {
+        case invalidResponseForRequest
     }
 }
 

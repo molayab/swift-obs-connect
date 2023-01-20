@@ -13,7 +13,7 @@ import Combine
 struct SwiftOBSClient {
     static var cancellables: [AnyCancellable] = []
     
-    static func main() async {
+    static func main() async throws {
         let a = SwiftOBSConnect()
         await a.statePublisher().sink { state in
             print(" --> STATE: \(state)")
@@ -29,14 +29,13 @@ struct SwiftOBSClient {
                 print(event)
             }.store(in: &cancellables)
             
-            await a.responsePublisher().sink { completion in
-                print(completion)
-            } receiveValue: { event in
-                print(" RETURN --> \(event)")
-            }.store(in: &cancellables)
-            
             // Request something is easy:
-            a.send(request: .getVersion)
+            /*if case let .GetVersion(model) = await a.send(request: .GetVersion) {
+                print(" YAY - \(model.obsVersion)")
+            }*/
+            
+            let result: GetVersionResponse = try await a.send(request: .GetVersion)
+            print(result.platform)
         }
         
         

@@ -60,6 +60,17 @@ public enum Response {
         case GetStats
         case BroadcastCustomEvent
     }
+    
+    var model: any Codable {
+        switch self {
+        case .GetVersion(let getVersionResponse):
+            return getVersionResponse
+        case .GetStats(let getStatsResponse):
+            return getStatsResponse
+        case .BroadcastCustomEvent(let broadcastCustomEventResponse):
+            return broadcastCustomEventResponse
+        }
+    }
 }
 
 extension Response: Codable {
