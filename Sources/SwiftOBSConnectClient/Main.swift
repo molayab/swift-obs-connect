@@ -34,6 +34,9 @@ struct SwiftOBSClient {
             } receiveValue: { event in
                 print(" RETURN --> \(event)")
             }.store(in: &cancellables)
+            
+            // Request something is easy:
+            a.send(request: .getVersion)
         }
         
         
