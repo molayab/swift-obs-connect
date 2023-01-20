@@ -22,7 +22,7 @@ try? await client.connect(
 // At this point, you are connected to the OBS, try sending some
 // commands or keep listening for changes and events.
 
-let result: GetVersionResponse = try await a.send(request: .getVersion)
+let result: GetVersionResponse = try await client.send(request: .getVersion)
 print(result.platform)
 // Sends a GetVersion request and awaits for its response.
 ```
